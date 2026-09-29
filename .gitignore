@@ -1,0 +1,13 @@
+# 依存関係・ビルド成果物
+node_modules/
+dist/
+dist-electron/
+release/
+
+# OS・エディタ
+.DS_Store
+Thumbs.db
+.vscode/
+
+# ログ
+*.log

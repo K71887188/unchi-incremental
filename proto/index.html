@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>うんちインクリメンタル 試作v4（金のうんち・カード転生）</title>
+<style>
+:root{--bg:#fff1c9;--fg:#3b2a1a;--panel:#ffffff;--line:#3b2a1a;--hi:#ff5fa2}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:"Yu Gothic","Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:960px;margin:0 auto;padding:12px}
+h1{margin:0 0 4px;font-size:1.5rem}
+#r{font-size:.8rem;font-weight:normal;display:block;color:#6b5a44}
+canvas{display:block;width:100%;image-rendering:pixelated;border:3px solid var(--line);background:#8fd6ff;cursor:crosshair}
+.grp{margin-top:10px;border:2px solid var(--line);background:var(--panel)}
+.grp>summary{cursor:pointer;padding:8px 10px;font-weight:bold;display:flex;justify-content:space-between}
+.grp[open]>summary{border-bottom:2px solid var(--line)}
+.row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;padding:8px}
+button{font:inherit;color:var(--fg);background:#fff8ea;border:2px solid var(--line);padding:8px;cursor:pointer;text-align:left}
+button:disabled{opacity:.4;cursor:default}
+button:not(:disabled):hover{border-color:var(--hi)}
+.unlock{background:#ffe9b0}
+.asc{background:#ffd0ea}
+.sub{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.sub button{font-size:.8rem;text-align:center}
+</style>
+</head>
+<body>
+<main>
+<h1>うんP <span id="p">0</span>　🥇金うんP <span id="gp">0</span><span id="r"></span></h1>
+<canvas id="c" width="480" height="270"></canvas>
+<div id="groups"></div>
+<div class="sub"><button id="cheat">テスト用 +5000うんP</button><button id="cheatgp">テスト用 +100金うんP</button><button id="reset">データ消去</button></div>
+</main>
+<script>
+const W=480,H=270,cv=document.getElementById('c'),ctx=cv.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+const IMG='../DOTOWN/';
+function I(f){const i=new Image();i.src=IMG+f;return i}
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const U=['','K','M','B','T','Qa','Qi'];
+function fmt(n){n=Math.floor(n);if(n<1000)return''+n;const i=Math.min(Math.floor(Math.log10(n)/3),U.length-1);return(n/Math.pow(1000,i)).toFixed(2)+U[i]}
+function cCost(base,g,n){return Math.ceil(base*Math.pow(g,n))}
+const CH=[
+ {id:'human',name:'人間',unlockCost:0,walk:I('男の子.png'),strain:I('男の子.png'),tint:true,w:16,baseWalk:55,baseStrain:2.5,baseVal:1,skb:{strain:3,freq:5,value:8,count:40}},
+ {id:'chicken',name:'ニワトリ',unlockCost:80,walk:I('ニワトリ.png'),strain:I('ニワトリ.png'),tint:true,w:11,baseWalk:90,baseStrain:1.0,baseVal:1,skb:{strain:6,freq:8,value:10,count:60}},
+ {id:'dog',name:'犬',unlockCost:250,walk:I('横向きのダックスフンド.png'),strain:I('こっち向きのダックスフンド.png'),w:15,baseWalk:70,baseStrain:1.8,baseVal:3,skb:{strain:15,freq:20,value:25,count:150}},
+ {id:'cat',name:'猫',unlockCost:250,walk:I('黒ネコ.png'),strain:I('黒い座りネコ.png'),w:14,baseWalk:75,baseStrain:1.7,baseVal:3,skb:{strain:15,freq:20,value:25,count:150}},
+ {id:'pig',name:'ブタ',unlockCost:1200,walk:I('ブタ.png'),strain:I('ブタ.png'),tint:true,w:18,baseWalk:60,baseStrain:2.2,baseVal:8,skb:{strain:60,freq:80,value:100,count:600}},
+ {id:'alpaca',name:'アルパカ',unlockCost:1500,walk:I('白いアルパカ.png'),strain:I('白いアルパカ.png'),tint:true,w:19,baseWalk:58,baseStrain:2.3,baseVal:9,skb:{strain:70,freq:90,value:120,count:700}},
+ {id:'elephant',name:'ゾウ',unlockCost:8000,walk:I('ゾウ.png'),strain:I('ゾウ.png'),tint:true,w:34,baseWalk:35,baseStrain:4.5,baseVal:40,skb:{strain:400,freq:500,value:650,count:4000}},
+ {id:'hippo',name:'カバ',unlockCost:9000,walk:I('ピンクのカバ.png'),strain:I('ピンクのカバ.png'),tint:true,w:30,baseWalk:32,baseStrain:4.8,baseVal:45,skb:{strain:450,freq:550,value:700,count:4500}},
+ {id:'oniRed',name:'赤鬼',unlockCost:50000,walk:I('赤鬼.png'),strain:I('赤鬼.png'),tint:true,w:26,baseWalk:45,baseStrain:3.5,baseVal:200,skb:{strain:2500,freq:3000,value:4000,count:25000}},
+ {id:'mammoth',name:'マンモス',unlockCost:60000,walk:I('茶色のマンモス.png'),strain:I('茶色のマンモス.png'),tint:true,w:36,baseWalk:30,baseStrain:5.5,baseVal:220,skb:{strain:3000,freq:3500,value:4500,count:30000}},
+ {id:'pegasus',name:'ペガサス',unlockCost:500000,walk:I('白いペガサス.png'),strain:I('白いペガサス.png'),tint:true,w:28,baseWalk:70,baseStrain:2.0,baseVal:1200,skb:{strain:25000,freq:30000,value:40000,count:250000}},
+ {id:'dragon',name:'ドラゴン',unlockCost:800000,walk:I('ドラゴン.png'),strain:I('ドラゴン.png'),tint:true,w:32,baseWalk:40,baseStrain:3.0,baseVal:2500,skb:{strain:40000,freq:48000,value:64000,count:400000}},
+ {id:'oniBlue',name:'青鬼',unlockCost:1200000,walk:I('青鬼.png'),strain:I('青鬼.png'),tint:true,w:26,baseWalk:48,baseStrain:3.2,baseVal:4000,skb:{strain:60000,freq:72000,value:96000,count:600000}},
+ {id:'ufo',name:'UFO',unlockCost:2000000,walk:I('UFO.png'),strain:I('UFO.png'),tint:true,w:22,baseWalk:90,baseStrain:1.5,baseVal:8000,skb:{strain:100000,freq:120000,value:160000,count:1000000}},
+];
+const SKG={strain:1.35,freq:1.35,count:1.8,value:1.5},SKMAX={strain:12,freq:12,count:8,value:40};
+const SKN={strain:'踏ん張り短縮',freq:'移動速度アップ',count:'出現数増加',value:'うんP増加'};
+const POOP=I('うんち.png');
+const AUTO=[
+ {id:'fly',name:'ハエ',unlockCost:2000,img:I('ハエ.png'),w:8,speed:140,radius:10,incBase:2500,incG:1.6,incMax:10},
+ {id:'beetle',name:'フンコロガシ',unlockCost:15000,img:I('フンコロガシ.png'),w:13,speed:45,radius:14,incBase:18000,incG:1.6,incMax:10},
+ {id:'robot',name:'掃除ロボ',unlockCost:100000,img:I('ロボ.png'),w:18,speed:70,radius:22,incBase:120000,incG:1.7,incMax:6},
+ {id:'magnet',name:'吸引マグネット',unlockCost:500000,img:I('マグネット.png'),w:22,speed:20,radius:70,incBase:600000,incG:1.8,incMax:4},
+];
+const KEY='unchi_proto4',ZERO={};
+CH.forEach(c=>{ZERO[c.id]={unlocked:c.unlockCost===0,strain:0,freq:0,count:0,value:0}});
+const AZERO={};AUTO.forEach(a=>{AZERO[a.id]={unlocked:false,count:0}});
+function fresh(){return{p:0,goldP:0,goldUnlock:false,goldLv:0,range:0,life:0,ascCount:0,ascStats:{val:0,autoGain:0,crit:0,goldVal:0},ch:JSON.parse(JSON.stringify(ZERO)),auto:JSON.parse(JSON.stringify(AZERO))}}
+let S=fresh();
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d)S=Object.assign(fresh(),d,{ascStats:Object.assign({val:0,autoGain:0,crit:0,goldVal:0},d.ascStats),ch:Object.assign(JSON.parse(JSON.stringify(ZERO)),d.ch),auto:Object.assign(JSON.parse(JSON.stringify(AZERO)),d.auto)})}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const GOLD_MAXLV=10,GOLD_UNLOCK_COST=2000,RANGE_BASE=80,RANGE_G=2.5,LIFE_BASE=20,LIFE_G=1.6;
+const rng=()=>8+6*S.range,life=()=>2+.5*S.life,valMul=()=>1+S.ascStats.val*.08;
+const critChance=()=>S.ascStats.crit*.03,autoGainMul=()=>1+S.ascStats.autoGain*.15,goldValMul=()=>1+S.ascStats.goldVal*.5;
+const goldProb=()=>S.goldUnlock?.0033+.00133*S.goldLv:0;
+function ascCost(n){return Math.ceil(30*Math.pow(2.2,n))}
+function lv(c){return S.ch[c.id]}
+function alv(a){return S.auto[a.id]}
+function strainT(c){return c.baseStrain*Math.pow(.85,lv(c).strain)}
+function walkSp(c){return c.baseWalk*Math.pow(1.15,lv(c).freq)}
+function val(c){return(c.baseVal+lv(c).value)*valMul()}
+let hs=[],ps=[],as=[],fx=[];
+function pick(h){h.tx=rnd(20,W-20);h.ty=rnd(100,H-24);h.st='walk';h.t=0}
+function spawn(c){const h={c,x:rnd(30,W-30),y:rnd(110,H-30)};pick(h);h.st='strain';h.t=strainT(c)*.5;hs.push(h)}
+function spawnAuto(a){const u={a,x:rnd(30,W-30),y:rnd(110,H-30)};pick(u);as.push(u)}
+function upd(dt){
+ for(const c of CH){
+  if(!lv(c).unlocked)continue;
+  if(hs.filter(h=>h.c===c).length<1+lv(c).count)spawn(c);
+ }
+ for(const a of AUTO){
+  if(!alv(a).unlocked)continue;
+  if(as.filter(u=>u.a===a).length<1+alv(a).count)spawnAuto(a);
+ }
+ for(const h of hs){
+  if(h.st==='walk'){const dx=h.tx-h.x,dy=h.ty-h.y,d=Math.hypot(dx,dy),s=walkSp(h.c)*dt;
+   if(d<=s){h.st='strain';h.t=0}else{h.x+=dx/d*s;h.y+=dy/d*s}}
+  else{h.t+=dt;if(h.t>=strainT(h.c)){ps.push({x:h.x,y:h.y+4,a:0,v:val(h.c),gold:Math.random()<goldProb()});pick(h)}}
+ }
+ for(const p of ps)p.a+=dt;
+ ps=ps.filter(p=>p.a<life());
+ for(const u of as){
+  const dx=u.tx-u.x,dy=u.ty-u.y,d=Math.hypot(dx,dy),s=u.a.speed*dt;
+  if(d<=s)pick(u);else{u.x+=dx/d*s;u.y+=dy/d*s}
+  for(const p of ps)if(!p._g&&Math.hypot(p.x-u.x,p.y-u.y)<=u.a.radius){p._g=1}
+ }
+ if(as.length){let g=0,gp=0;ps=ps.filter(p=>{if(p._g){g+=p.v;if(p.gold)gp+=goldValMul();return false}return true});
+  if(g){S.p+=g*autoGainMul();S.goldP+=gp;fx.push({x:W/2,y:16,t:0,r:0,s:'+'+fmt(g*autoGainMul())+(gp?' 🥇+'+fmt(gp):''),auto:true})}}
+}
+function drawImgBox(img,x,y,w){
+ if(!img.complete||!img.naturalWidth)return;
+ const h=w*img.naturalHeight/img.naturalWidth;
+ ctx.drawImage(img,Math.round(x-w/2),Math.round(y-h),w,h);
+}
+function dh(h){
+ const c=h.c,s=h.st==='strain',img=s?c.strain:c.walk;
+ const bob=s?Math.round(Math.sin(h.t*40)):0;
+ ctx.globalAlpha=.2;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(h.x,h.y+2,c.w*.5,3,0,0,7);ctx.fill();ctx.globalAlpha=1;
+ if(s&&c.tint){ctx.save();ctx.filter='hue-rotate(-40deg) saturate(1.6)'}
+ drawImgBox(img,h.x+bob,h.y,c.w);
+ if(s&&c.tint)ctx.restore();
+}
+function dp(p){
+ if(p._g)return;
+ if(life()-p.a<Math.min(4,life()*.4)&&Math.floor(p.a*10)%2)return;
+ const sc=.55+Math.min(.5,p.v*.02);
+ if(p.gold){ctx.save();ctx.filter='hue-rotate(70deg) saturate(3) brightness(1.3)'}
+ drawImgBox(POOP,p.x,p.y,14*sc);
+ if(p.gold)ctx.restore();
+}
+function da(u){drawImgBox(u.a.img,u.x,u.y,u.a.w)}
+function draw(dt){
+ ctx.fillStyle='#8fd6ff';ctx.fillRect(0,0,W,90);
+ ctx.fillStyle='#fff';ctx.fillRect(60,20,40,10);ctx.fillRect(70,14,24,8);ctx.fillRect(320,34,50,10);ctx.fillRect(332,28,26,8);
+ ctx.fillStyle='#7bd15c';ctx.fillRect(0,90,W,H-90);
+ ctx.fillStyle='#69bf4b';for(let i=0;i<40;i++)ctx.fillRect((i*97)%W,100+(i*53)%160,6,2);
+ const layer=[...ps.map(p=>({y:p.y,f:()=>dp(p)})),
+  ...hs.map(h=>({y:h.y,f:()=>dh(h)})),...as.map(u=>({y:u.y,f:()=>da(u)}))];
+ layer.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
+ fx=fx.filter(f=>(f.t+=dt)<.6);
+ for(const f of fx){
+  ctx.globalAlpha=1-f.t/.6;
+  if(!f.auto){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.stroke()}
+  if(f.s){ctx.font='10px monospace';ctx.fillStyle='#3b2a1a';ctx.fillText(f.s,f.x+1,f.y-f.t*30+1);ctx.fillStyle=f.auto?'#7ad1ff':'#ffe14d';ctx.fillText(f.s,f.x,f.y-f.t*30)}
+ }
+ ctx.globalAlpha=1;
+}
+cv.addEventListener('pointerdown',e=>{
+ const b=cv.getBoundingClientRect(),x=(e.clientX-b.left)*W/b.width,y=(e.clientY-b.top)*H/b.height;
+ let g=0,gp=0,crit=false;
+ ps=ps.filter(p=>{if(!p._g&&Math.hypot(p.x-x,p.y-y)<=rng()){
+   const hit=Math.random()<critChance();if(hit)crit=true;
+   g+=p.v*(hit?2:1);if(p.gold)gp+=goldValMul();return false}return true});
+ S.p+=g;S.goldP+=gp;
+ if(g)fx.push({x,y,t:0,r:rng(),s:(crit?'💥':'')+'+'+fmt(g)+(gp?' 🥇+'+fmt(gp):'')});
+ ui();
+});
+const grpBox=document.getElementById('groups'),P=document.getElementById('p'),GP=document.getElementById('gp'),R=document.getElementById('r');
+let RBTN,LBTN,GUBTN,GLBTN,ASCBTN;
+const ASC_POOL=[
+ {id:'val',name:'うんP獲得量アップ',desc:'全キャラのうんP +8%'},
+ {id:'autoGain',name:'自動回収 獲得量アップ',desc:'自動回収で得るうんP +15%'},
+ {id:'crit',name:'クリティカル回収',desc:'クリック回収時、確率+3%でポイント2倍'},
+ {id:'goldVal',name:'金のうんち価値アップ',desc:'金のうんちで得る金うんP +50%'},
+];
+let pendingCards=null;
+function renderAsc(row){
+ row.innerHTML='';
+ if(!pendingCards){
+  const btn=document.createElement('button');btn.className='asc';ASCBTN=btn;
+  btn.onclick=()=>{
+   if(S.goldP<ascCost(S.ascCount))return;
+   const pool=ASC_POOL.slice();pendingCards=[];
+   for(let i=0;i<3&&pool.length;i++)pendingCards.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+   buildUI();
+  };
+  row.appendChild(btn);
+ }else{
+  pendingCards.forEach(card=>{
+   const b=document.createElement('button');b.className='asc';
+   b.innerHTML='<b>'+card.name+'</b><br>'+card.desc;
+   b.onclick=()=>{
+    const cost=ascCost(S.ascCount),leftover=S.goldP-cost;
+    const ns=Object.assign({},S.ascStats);ns[card.id]++;
+    S=Object.assign(fresh(),{goldP:leftover,ascStats:ns,ascCount:S.ascCount+1});
+    hs=[];ps=[];as=[];
+    pendingCards=null;save();buildUI();ui();
+   };
+   row.appendChild(b);
+  });
+  const cancel=document.createElement('button');cancel.textContent='キャンセル';
+  cancel.onclick=()=>{pendingCards=null;buildUI()};
+  row.appendChild(cancel);
+ }
+}
+function mkBtn(row,onclick){const b=document.createElement('button');b.onclick=onclick;row.appendChild(b);return b}
+function mkGroup(title,open){const g=document.createElement('details');g.className='grp';g.open=open;
+ g.innerHTML='<summary>'+title+'</summary>';const row=document.createElement('div');row.className='row';
+ g.appendChild(row);grpBox.appendChild(g);return row}
+function buildUI(){
+ grpBox.innerHTML='';
+ const prow=mkGroup('プレイヤー強化',true);
+ RBTN=mkBtn(prow,()=>{const c=cCost(RANGE_BASE,RANGE_G,S.range);if(S.p>=c&&S.range<8){S.p-=c;S.range++;save();ui()}});
+ LBTN=mkBtn(prow,()=>{const c=cCost(LIFE_BASE,LIFE_G,S.life);if(S.p>=c&&S.life<10){S.p-=c;S.life++;save();ui()}});
+ const grow=mkGroup('金のうんち・転生',true);
+ GUBTN=mkBtn(grow,()=>{if(!S.goldUnlock&&S.p>=GOLD_UNLOCK_COST){S.p-=GOLD_UNLOCK_COST;S.goldUnlock=true;save();ui()}});
+ GLBTN=mkBtn(grow,()=>{const n=S.goldLv,c=cCost(1500,1.6,n);if(S.goldUnlock&&S.p>=c&&n<GOLD_MAXLV){S.p-=c;S.goldLv++;save();ui()}});
+ const ascRow=document.createElement('div');ascRow.className='row';grow.parentElement.appendChild(ascRow);
+ renderAsc(ascRow);
+ const arow=mkGroup('自動回収',true);
+ AUTO.forEach(a=>{
+  if(!alv(a).unlocked){
+   a.ubtn=mkBtn(arow,()=>{if(S.p>=a.unlockCost){S.p-=a.unlockCost;alv(a).unlocked=true;save();buildUI();ui()}});
+   a.ubtn.className='unlock';
+  }else{
+   a.incbtn=mkBtn(arow,()=>{const n=alv(a).count,cost=cCost(a.incBase,a.incG,n);
+    if(S.p>=cost&&n<a.incMax){S.p-=cost;alv(a).count++;save();ui()}});
+  }
+ });
+ CH.forEach(c=>{
+  const row=mkGroup(c.name,lv(c).unlocked);
+  if(!lv(c).unlocked){
+   c.ubtn=mkBtn(row,()=>{if(S.p>=c.unlockCost){S.p-=c.unlockCost;lv(c).unlocked=true;save();buildUI();ui()}});
+   c.ubtn.className='unlock';
+  }else{
+   c.btn={};
+   ['strain','freq','value','count'].forEach(k=>{
+    c.btn[k]=mkBtn(row,()=>{const n=lv(c)[k],cost=cCost(c.skb[k],SKG[k],n);
+     if(S.p>=cost&&n<SKMAX[k]){S.p-=cost;lv(c)[k]++;save();ui()}});
+   });
+  }
+ });
+ refreshAll();
+}
+function refreshAll(){
+ const rc=cCost(RANGE_BASE,RANGE_G,S.range),lc=cCost(LIFE_BASE,LIFE_G,S.life);
+ RBTN.innerHTML='<b>クリック範囲拡大</b> Lv'+S.range+(S.range>=8?' MAX':'')+'<br>'+(S.range>=8?'':'💩 '+fmt(rc));
+ RBTN.disabled=S.range>=8||S.p<rc;
+ LBTN.innerHTML='<b>残留時間延長</b> Lv'+S.life+(S.life>=10?' MAX':'')+'<br>'+(S.life>=10?'':'💩 '+fmt(lc));
+ LBTN.disabled=S.life>=10||S.p<lc;
+ GUBTN.innerHTML=S.goldUnlock?'<b>金のうんち 解放済</b><br>出現確率 '+(goldProb()*100).toFixed(1)+'%':'<b>金のうんち解放</b><br>💩 '+fmt(GOLD_UNLOCK_COST);
+ GUBTN.disabled=S.goldUnlock||S.p<GOLD_UNLOCK_COST;
+ const gc=cCost(1500,1.6,S.goldLv),gm=S.goldLv>=GOLD_MAXLV;
+ GLBTN.innerHTML='<b>金のうんち確率アップ</b> Lv'+S.goldLv+(gm?' MAX':'')+'<br>'+(gm?'':'💩 '+fmt(gc));
+ GLBTN.disabled=!S.goldUnlock||gm||S.p<gc;
+ if(ASCBTN&&ASCBTN.isConnected){
+  const cost=ascCost(S.ascCount);
+  ASCBTN.innerHTML='<b>転生</b>（'+S.ascCount+'回目）<br>🥇'+fmt(cost)+' 消費してカードを引く';
+  ASCBTN.disabled=S.goldP<cost;
+ }
+ AUTO.forEach(a=>{
+  if(!alv(a).unlocked){if(a.ubtn){a.ubtn.innerHTML='<b>'+a.name+'解放</b><br>💩 '+fmt(a.unlockCost);a.ubtn.disabled=S.p<a.unlockCost}return}
+  if(!a.incbtn)return;
+  const n=alv(a).count,mx=n>=a.incMax,cost=cCost(a.incBase,a.incG,n);
+  a.incbtn.innerHTML='<b>'+a.name+'増加</b> Lv'+n+(mx?' MAX':'')+'<br>'+(mx?'':'💩 '+fmt(cost));
+  a.incbtn.disabled=mx||S.p<cost;
+ });
+ CH.forEach(c=>{
+  if(!lv(c).unlocked){if(c.ubtn)c.ubtn.disabled=S.p<c.unlockCost;return}
+  if(!c.btn)return;
+  ['strain','freq','value','count'].forEach(k=>{
+   const n=lv(c)[k],mx=n>=SKMAX[k],cost=cCost(c.skb[k],SKG[k],n),b=c.btn[k];
+   b.disabled=mx||S.p<cost;
+   b.innerHTML='<b>'+SKN[k]+'</b> Lv'+n+(mx?' MAX':'')+'<br>'+(mx?'':'💩 '+fmt(cost));
+  });
+ });
+}
+function ui(){
+ P.textContent=fmt(S.p);GP.textContent=fmt(S.goldP);
+ let rate=0;CH.forEach(c=>{if(lv(c).unlocked)rate+=(1+lv(c).count)/(150/walkSp(c)+strainT(c))*val(c)});
+ R.textContent='毎秒 約'+fmt(rate)+'うんP / 消えるまで'+life().toFixed(1)+'秒 / 回収範囲'+rng()+(S.goldUnlock?' / 金の確率'+(goldProb()*100).toFixed(1)+'%':'');
+ refreshAll();
+}
+document.getElementById('cheat').onclick=()=>{S.p+=5000;ui()};
+document.getElementById('cheatgp').onclick=()=>{S.goldP+=100;ui()};
+const rs=document.getElementById('reset');let rc=0;
+rs.onclick=()=>{
+ if(++rc<2){rs.textContent='もう一度押すと消去';setTimeout(()=>{rc=0;rs.textContent='データ消去'},3000);return}
+ S=fresh();ps=[];hs=[];as=[];pendingCards=null;save();rc=0;rs.textContent='データ消去';buildUI();ui();
+};
+let last=performance.now(),a1=0,a2=0;
+function loop(t){const dt=Math.min((t-last)/1000,.1);last=t;upd(dt);draw(dt);a1+=dt;a2+=dt;
+ if(a1>.25){a1=0;ui()}if(a2>5){a2=0;save()}requestAnimationFrame(loop)}
+buildUI();ui();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
