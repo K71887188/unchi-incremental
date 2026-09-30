@@ -4,10 +4,34 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>うんちインクリメンタル（開発版）</title>
-<style>html,body{margin:0;background:#fff1c9;display:flex;align-items:center;justify-content:center;min-height:100vh}</style>
+<style>
+:root{--bg:#fff1c9;--fg:#3b2a1a;--panel:#ffffff;--line:#3b2a1a;--hi:#ff5fa2}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:"Yu Gothic","Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:960px;margin:0 auto;padding:12px}
+h1{margin:0 0 4px;font-size:1.5rem}
+#r{font-size:.8rem;font-weight:normal;display:block;color:#6b5a44}
+#app{width:100%;aspect-ratio:480/270;border:3px solid var(--line)}
+#app canvas{display:block;width:100% !important;height:100% !important}
+.grp{margin-top:10px;border:2px solid var(--line);background:var(--panel)}
+.grp>summary{cursor:pointer;padding:8px 10px;font-weight:bold;display:flex;justify-content:space-between}
+.grp[open]>summary{border-bottom:2px solid var(--line)}
+.row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;padding:8px}
+button{font:inherit;color:var(--fg);background:#fff8ea;border:2px solid var(--line);padding:8px;cursor:pointer;text-align:left}
+button:disabled{opacity:.4;cursor:default}
+button:not(:disabled):hover{border-color:var(--hi)}
+.unlock{background:#ffe9b0}
+.asc{background:#ffd0ea}
+.sub{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.sub button{font-size:.8rem;text-align:center}
+</style>
 </head>
 <body>
+<main>
+<h1>うんP <span id="p">0</span>　🥇金うんP <span id="gp">0</span><span id="r"></span></h1>
 <div id="app"></div>
+<div id="groups"></div>
+<div class="sub"><button id="cheat">テスト用 +5000うんP</button><button id="cheatgp">テスト用 +100金うんP</button><button id="reset">データ消去</button></div>
+</main>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
