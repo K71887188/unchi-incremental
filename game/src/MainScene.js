@@ -32,6 +32,7 @@ export default class MainScene extends Phaser.Scene {
       this.add.rectangle((i * 97) % W, 100 + (i * 53) % (H - 100), 6, 2, 0x69bf4b).setOrigin(0);
     }
     this.hs = []; this.ps = []; this.as = [];
+    this.add.graphics().lineStyle(2, 0x3b2a1a, 1).strokeRect(1, 1, W - 2, H - 2).setDepth(10000);
     this.input.on('pointerdown', (p) => this.onClick(p));
   }
 
