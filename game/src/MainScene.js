@@ -7,11 +7,11 @@ export default class MainScene extends Phaser.Scene {
 
   preload() {
     CH.forEach(c => {
-      this.load.image('c_' + c.id, '/dotown/' + c.img);
-      if (c.strainImg) this.load.image('c_' + c.id + '_s', '/dotown/' + c.strainImg);
+      this.load.image('c_' + c.id, 'dotown/' + c.img);
+      if (c.strainImg) this.load.image('c_' + c.id + '_s', 'dotown/' + c.strainImg);
     });
-    AUTO.forEach(a => this.load.image('a_' + a.id, '/dotown/' + a.img));
-    this.load.image('poop', '/dotown/うんち.png');
+    AUTO.forEach(a => this.load.image('a_' + a.id, 'dotown/' + a.img));
+    this.load.image('poop', 'dotown/うんち.png');
   }
 
   fitWidth(img, targetWidth) {

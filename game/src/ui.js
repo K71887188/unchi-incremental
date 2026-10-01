@@ -9,6 +9,10 @@ let RBTN, LBTN, GUBTN, GLBTN, ASCBTN;
 
 export function initUI(sceneRef) {
   scene = sceneRef;
+  const overlay = document.getElementById('overlay');
+  document.getElementById('toggleUI').onclick = () => overlay.classList.remove('hidden');
+  document.getElementById('closeUI').onclick = () => overlay.classList.add('hidden');
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add('hidden'); });
   document.getElementById('cheat').onclick = () => { G.S.p += 5000; ui(); };
   document.getElementById('cheatgp').onclick = () => { G.S.goldP += 100; ui(); };
   const rs = document.getElementById('reset'); let rc = 0;

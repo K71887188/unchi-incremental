@@ -1,4 +1,7 @@
 const { app, BrowserWindow } = require('electron');
+const path = require('path');
+
+const isDev = process.argv.includes('--dev');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -11,9 +14,13 @@ function createWindow() {
     },
   });
 
-  // 開発中はViteの開発サーバーに接続する。
-  // 本番ビルドでは、`npm run build`で作ったdist/index.htmlを読み込む形に切り替える。
-  win.loadURL('http://localhost:5173');
+  if (isDev) {
+    // 開発中：Viteの開発サーバーに接続する（`npm run dev`を別途起動しておくこと）
+    win.loadURL('http://localhost:5173');
+  } else {
+    // 本番：`npm run build`で作ったdist/index.htmlを直接読み込む
+    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+  }
 }
 
 app.whenReady().then(createWindow);

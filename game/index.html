@@ -8,30 +8,55 @@
 :root{--bg:#fff1c9;--fg:#3b2a1a;--panel:#ffffff;--line:#3b2a1a;--hi:#ff5fa2}
 html,body{margin:0;background:var(--bg);color:var(--fg);font-family:"Yu Gothic","Hiragino Sans","Noto Sans JP",sans-serif}
 main{max-width:960px;margin:0 auto;padding:12px}
-h1{margin:0 0 4px;font-size:1.5rem}
-#r{font-size:.8rem;font-weight:normal;display:block;color:#6b5a44}
+h1{margin:0 0 4px;font-size:1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#r{font-size:.8rem;font-weight:normal;display:block;width:100%;color:#6b5a44}
 #app{width:100%;aspect-ratio:480/270}
 #app canvas{display:block;width:100% !important;height:100% !important}
-.grp{margin-top:10px;border:2px solid var(--line);background:var(--panel)}
-.grp>summary{cursor:pointer;padding:8px 10px;font-weight:bold;display:flex;justify-content:space-between}
-.grp[open]>summary{border-bottom:2px solid var(--line)}
+#toggleUI{margin-left:auto;font-size:.85rem;padding:8px 14px}
+.grp{margin-top:10px;
+  border-image-source:url(ui/panel_slate.png);border-image-slice:10 fill;border-image-width:10px;
+  image-rendering:pixelated;padding:2px}
+.grp>summary{cursor:pointer;padding:8px 10px;font-weight:bold;display:flex;justify-content:space-between;color:#eef3f6;text-shadow:1px 1px 0 #1c2b33}
 .row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;padding:8px}
-button{font:inherit;color:var(--fg);background:#fff8ea;border:2px solid var(--line);padding:8px;cursor:pointer;text-align:left}
-button:disabled{opacity:.4;cursor:default}
-button:not(:disabled):hover{border-color:var(--hi)}
-.unlock{background:#ffe9b0}
-.asc{background:#ffd0ea}
+button{font:inherit;color:var(--fg);cursor:pointer;text-align:left;padding:10px 8px;
+  border:none;background-color:transparent;
+  border-image-source:url(ui/panel_cream.png);border-image-slice:10 fill;border-image-width:10px;
+  image-rendering:pixelated}
+button:disabled{opacity:.45;cursor:default}
+button:not(:disabled):hover{filter:brightness(1.08)}
+.unlock{border-image-source:url(ui/panel_brown.png);color:#fff6e4;text-shadow:1px 1px 0 #5a3414}
+.asc{border-image-source:url(ui/panel_brown.png);filter:hue-rotate(-45deg) saturate(1.6);color:#fff6e4;text-shadow:1px 1px 0 #5a3414}
 .sub{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
 .sub button{font-size:.8rem;text-align:center}
+
+.overlay{position:fixed;inset:0;background:rgba(20,14,8,.6);z-index:1000;overflow-y:auto;padding:16px;display:flex;justify-content:center}
+.overlay.hidden{display:none}
+.overlay-inner{max-width:960px;width:100%}
+#closeUI{margin-bottom:12px;font-size:.9rem;padding:10px 16px}
 </style>
 </head>
 <body>
 <main>
-<h1>うんP <span id="p">0</span>　🥇金うんP <span id="gp">0</span><span id="r"></span></h1>
+<h1>
+  うんP <span id="p">0</span>　🥇金うんP <span id="gp">0</span>
+  <button id="toggleUI">スキルツリーへ</button>
+  <span id="r"></span>
+</h1>
 <div id="app"></div>
-<div id="groups"></div>
-<div class="sub"><button id="cheat">テスト用 +5000うんP</button><button id="cheatgp">テスト用 +100金うんP</button><button id="reset">データ消去</button></div>
 </main>
+
+<div id="overlay" class="overlay hidden">
+  <div class="overlay-inner">
+    <button id="closeUI">✕ フィールドへ戻る</button>
+    <div id="groups"></div>
+    <div class="sub">
+      <button id="cheat">テスト用 +5000うんP</button>
+      <button id="cheatgp">テスト用 +100金うんP</button>
+      <button id="reset">データ消去</button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
