@@ -4,6 +4,9 @@ dist/
 dist-electron/
 release/
 
+# 素材の原本（容量が大きいzip・大量の未使用ファイルを含むため、使う分だけgame/public/へコピーして使う）
+Kenney/
+
 # OS・エディタ
 .DS_Store
 Thumbs.db
