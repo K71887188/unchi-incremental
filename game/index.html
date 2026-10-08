@@ -6,13 +6,22 @@
 <title>うんちインクリメンタル（開発版）</title>
 <style>
 :root{--bg:#fff1c9;--fg:#3b2a1a;--panel:#ffffff;--line:#3b2a1a;--hi:#ff5fa2}
-html,body{margin:0;background:var(--bg);color:var(--fg);font-family:"Yu Gothic","Hiragino Sans","Noto Sans JP",sans-serif}
-main{max-width:960px;margin:0 auto;padding:12px}
-h1{margin:0 0 4px;font-size:1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:"Yu Gothic","Hiragino Sans","Noto Sans JP",sans-serif}
+body{display:flex;flex-direction:column}
+main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px;box-sizing:border-box}
+h1{margin:0 0 8px;font-size:1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0}
 #r{font-size:.8rem;font-weight:normal;display:block;width:100%;color:#6b5a44}
-#app{width:100%;aspect-ratio:480/270}
-#app canvas{display:block;width:100% !important;height:100% !important}
+#app{flex:1;min-height:0;width:100%;max-width:1440px;max-height:810px;margin:0 auto;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #toggleUI{margin-left:auto;font-size:.85rem;padding:8px 14px}
+#pauseBtn{font-size:.85rem;padding:8px 14px}
+
+#clockRow{display:flex;justify-content:center;flex-shrink:0;margin:2px 0}
+#clockRow.hide{visibility:hidden}
+#pixClock{font-family:"Courier New",monospace;font-weight:bold;letter-spacing:2px;
+  background:#1c120a;color:#ffd23f;padding:4px 14px;font-size:1.3rem;
+  border-image-source:url(ui/panel_brown.png);border-image-slice:10 fill;border-image-width:8px;border-style:solid;
+  image-rendering:pixelated;text-shadow:0 0 4px #ffb02e}
+#pixClock .lbl{font-size:.6rem;letter-spacing:1px;display:block;color:#e8c9a0;text-align:center;font-family:"Yu Gothic",sans-serif}
 .grp{margin-top:10px;
   border-image-source:url(ui/panel_slate.png);border-image-slice:10 fill;border-image-width:10px;
   image-rendering:pixelated;padding:2px}
@@ -33,15 +42,35 @@ button:not(:disabled):hover{filter:brightness(1.08)}
 .overlay.hidden{display:none}
 .overlay-inner{max-width:960px;width:100%}
 #closeUI{margin-bottom:12px;font-size:.9rem;padding:10px 16px}
+
+#bossBar{display:none;width:100%;max-width:960px;margin:4px auto 0;flex-shrink:0}
+#bossBar.show{display:block}
+#bossBarTrack{background:#2a1b10;border:2px solid var(--line);height:16px;border-radius:2px;overflow:hidden}
+#bossBarFill{background:linear-gradient(#b23cff,#6a1ab0);height:100%;width:100%;transition:width .2s}
+#bossBarLabel{font-size:.75rem;color:#6b5a44;margin-top:2px}
+
+.result-card{max-width:560px;margin:60px auto;text-align:center;
+  background:var(--bg);color:var(--fg);padding:20px;border-radius:4px;
+  border-image-source:url(ui/panel_cream.png);border-image-slice:10 fill;border-image-width:10px;border-style:solid;image-rendering:pixelated}
+.result-card h2{margin-bottom:4px}
+.result-card .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:16px}
 </style>
 </head>
 <body>
 <main>
 <h1>
-  うんP <span id="p">0</span>　🥇金うんP <span id="gp">0</span>
+  うんP <span id="p">0</span>
+  <button id="pauseBtn">⏸ 一時停止</button>
   <button id="toggleUI">スキルツリーへ</button>
   <span id="r"></span>
 </h1>
+<div id="clockRow">
+  <div id="pixClock"><span class="lbl">NEXT BOSS</span>20:00</div>
+</div>
+<div id="bossBar">
+  <div id="bossBarTrack"><div id="bossBarFill"></div></div>
+  <div id="bossBarLabel"></div>
+</div>
 <div id="app"></div>
 </main>
 
@@ -51,11 +80,15 @@ button:not(:disabled):hover{filter:brightness(1.08)}
     <div id="groups"></div>
     <div class="sub">
       <button id="cheat">テスト用 +5000うんP</button>
-      <button id="cheatgp">テスト用 +100金うんP</button>
+      <button id="skipboss">テスト用 ボス戦へ即移行</button>
       <button id="reset">データ消去</button>
     </div>
   </div>
 </div>
+
+<div id="resultOverlay" class="overlay hidden"><div class="result-card" id="resultInner"></div></div>
+<div id="victoryOverlay" class="overlay hidden"><div class="result-card" id="victoryInner"></div></div>
+<div id="pauseOverlay" class="overlay hidden"><div class="result-card" id="pauseInner"></div></div>
 
 <script type="module" src="/src/main.js"></script>
 </body>

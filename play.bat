@@ -1,0 +1,6 @@
+@echo off
+cd /d "%~dp0game"
+echo Building...
+call npm run build
+echo Starting...
+call npm run electron:prod

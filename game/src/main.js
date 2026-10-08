@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import { W, H } from './gamedata.js';
 import MainScene from './MainScene.js';
-import { initUI, ui } from './ui.js';
+import { initUI, ui, onBossEvent } from './ui.js';
 
-const scene = new MainScene(() => ui());
+const scene = new MainScene(() => ui(), (type, data) => onBossEvent(type, data));
 
 const config = {
   type: Phaser.AUTO,
@@ -22,6 +22,7 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.addEventListener('resize', () => game.scale.refresh());
 
 game.events.once('ready', () => {
   initUI(scene);
