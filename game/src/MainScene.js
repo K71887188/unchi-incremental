@@ -356,6 +356,7 @@ export default class MainScene extends Phaser.Scene {
 
   // 報酬カード選択後、または勝利後に次のランを始める
   startNewRun() {
+    this.resetField();
     if (this.bossImg) { this.bossImg.destroy(); this.bossImg = null; }
     (this.combatants || []).forEach(m => { if (m.img) m.img.destroy(); if (m.hpText) m.hpText.destroy(); });
     this.combatants = [];

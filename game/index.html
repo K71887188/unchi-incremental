@@ -54,6 +54,12 @@ button:not(:disabled):hover{filter:brightness(1.08)}
   border-image-source:url(ui/panel_cream.png);border-image-slice:10 fill;border-image-width:10px;border-style:solid;image-rendering:pixelated}
 .result-card h2{margin-bottom:4px}
 .result-card .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:16px}
+
+#titleOverlay{z-index:2000}
+#titleOverlay h1{font-size:2rem;justify-content:center;text-shadow:2px 2px 0 #c98a3a}
+#titleOverlay .result-card{margin-top:100px}
+.opt-row{display:flex;align-items:center;gap:10px;justify-content:center;margin:14px 0}
+.opt-row input[type=range]{width:200px}
 </style>
 </head>
 <body>
@@ -89,6 +95,8 @@ button:not(:disabled):hover{filter:brightness(1.08)}
 <div id="resultOverlay" class="overlay hidden"><div class="result-card" id="resultInner"></div></div>
 <div id="victoryOverlay" class="overlay hidden"><div class="result-card" id="victoryInner"></div></div>
 <div id="pauseOverlay" class="overlay hidden"><div class="result-card" id="pauseInner"></div></div>
+<div id="titleOverlay" class="overlay"><div class="result-card" id="titleInner"></div></div>
+<div id="optionsOverlay" class="overlay hidden"><div class="result-card" id="optionsInner"></div></div>
 
 <script type="module" src="/src/main.js"></script>
 </body>

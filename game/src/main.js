@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { W, H } from './gamedata.js';
 import MainScene from './MainScene.js';
-import { initUI, ui, onBossEvent } from './ui.js';
+import { initUI, initTitle, ui, onBossEvent } from './ui.js';
 
 const scene = new MainScene(() => ui(), (type, data) => onBossEvent(type, data));
 
@@ -25,7 +25,9 @@ const game = new Phaser.Game(config);
 window.addEventListener('resize', () => game.scale.refresh());
 
 game.events.once('ready', () => {
+  scene.setPaused(true); // タイトル画面での選択を待つ
   initUI(scene);
+  initTitle(scene);
   game.loop.hasResumed = false;
   scene.time.addEvent({
     delay: 250, loop: true,

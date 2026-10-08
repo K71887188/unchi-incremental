@@ -69,6 +69,16 @@ try {
 
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 export function replaceState(next) { S = next; }
+export function hasSave() { try { return localStorage.getItem(KEY) !== null; } catch (e) { return false; } }
+
+// 設定（音量など）はゲームのセーブデータとは別に保存する（「さいしょから」でも消えない）
+const SETTINGS_KEY = 'unchi_settings_v1';
+export let settings = { volume: 80, muted: false };
+try {
+  const sd = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+  if (sd) settings = Object.assign(settings, sd);
+} catch (e) {}
+export function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {} }
 
 export const GOLD_MAXLV = 10, GOLD_UNLOCK_COST = 2000;
 export const RANGE_BASE = 80, RANGE_G = 2.5, LIFE_BASE = 20, LIFE_G = 1.6;

@@ -157,8 +157,9 @@ function renderPauseScreen() {
     '<p>通算ラン数（転生回数）：' + G.S.ascCount + '</p>' +
     '<div style="text-align:left;font-size:.9rem;max-width:320px;margin:10px auto"><b>恒久ボーナスの獲得状況</b><ul>' + rows + '</ul></div>' +
     '<button id="resumeBtn" style="margin-top:8px">▶ 再開</button>' +
-    '<div class="sub" style="justify-content:center;margin-top:16px"><button id="fullResetBtn">恒久ボーナス含めすべて初めから</button></div>';
+    '<div class="sub" style="justify-content:center;margin-top:16px"><button id="pauseOptBtn">⚙ オプション</button><button id="fullResetBtn">恒久ボーナス含めすべて初めから</button></div>';
   document.getElementById('resumeBtn').onclick = () => document.getElementById('pauseBtn').click();
+  document.getElementById('pauseOptBtn').onclick = () => { renderOptions(() => { pauseOverlay.classList.remove('hidden'); }); pauseOverlay.classList.add('hidden'); optionsOverlay.classList.remove('hidden'); };
   const frBtn = document.getElementById('fullResetBtn');
   let frc = 0;
   frBtn.onclick = () => {
@@ -241,4 +242,67 @@ export function onBossEvent(type, data) {
     };
     victoryOverlay.classList.remove('hidden');
   }
+}
+
+const titleOverlay = document.getElementById('titleOverlay'), titleInner = document.getElementById('titleInner');
+const optionsOverlay = document.getElementById('optionsOverlay'), optionsInner = document.getElementById('optionsInner');
+
+function renderOptions(onBack) {
+  const s = G.settings;
+  optionsInner.innerHTML =
+    '<h2>⚙ オプション</h2>' +
+    '<div class="opt-row"><label for="volRange">音量</label><input type="range" id="volRange" min="0" max="100" value="' + s.volume + '"><span id="volVal">' + s.volume + '%</span></div>' +
+    '<div class="opt-row"><label><input type="checkbox" id="muteChk"' + (s.muted ? ' checked' : '') + '> ミュート</label></div>' +
+    '<p style="font-size:.75rem;color:#6b5a44">※ サウンドは今後実装予定です。ここでの設定はそのまま反映されます。</p>' +
+    '<button id="optBackBtn" style="margin-top:8px">戻る</button>';
+  document.getElementById('volRange').oninput = (e) => {
+    G.settings.volume = +e.target.value;
+    document.getElementById('volVal').textContent = G.settings.volume + '%';
+    G.saveSettings();
+  };
+  document.getElementById('muteChk').onchange = (e) => {
+    G.settings.muted = e.target.checked;
+    G.saveSettings();
+  };
+  document.getElementById('optBackBtn').onclick = () => {
+    optionsOverlay.classList.add('hidden');
+    onBack();
+  };
+}
+
+export function initTitle(sceneRef) {
+  scene = sceneRef;
+  renderTitleMain();
+}
+
+function renderTitleMain() {
+  const hasSave = G.hasSave();
+  titleInner.innerHTML =
+    '<h1 style="display:flex;justify-content:center">💩 うんちインクリメンタル</h1>' +
+    '<div class="sub" style="justify-content:center;margin-top:20px">' +
+    '<button id="titleContinue"' + (hasSave ? '' : ' disabled') + '>つづきから</button>' +
+    '<button id="titleNew">さいしょから</button>' +
+    '<button id="titleOpt">⚙ オプション</button>' +
+    '</div>' +
+    (hasSave ? '' : '<p style="font-size:.8rem;color:#6b5a44;margin-top:10px">セーブデータがまだありません</p>');
+
+  document.getElementById('titleContinue').onclick = () => startGame(false);
+  document.getElementById('titleNew').onclick = () => {
+    if (!hasSave) { startGame(true); return; }
+    titleInner.innerHTML += '<p style="margin-top:10px">本当にすべて消して最初から始めますか？</p><div class="sub" style="justify-content:center"><button id="confirmNew">はい、消して始める</button><button id="cancelNew">やめる</button></div>';
+    document.getElementById('confirmNew').onclick = () => startGame(true);
+    document.getElementById('cancelNew').onclick = renderTitleMain;
+  };
+  document.getElementById('titleOpt').onclick = () => {
+    renderOptions(() => { renderTitleMain(); titleOverlay.classList.remove('hidden'); });
+    titleOverlay.classList.add('hidden'); optionsOverlay.classList.remove('hidden');
+  };
+}
+
+function startGame(wipe) {
+  if (wipe) { G.replaceState(G.fresh()); G.save(); }
+  scene.startNewRun();
+  scene.setPaused(false);
+  titleOverlay.classList.add('hidden');
+  buildUI(); ui();
 }
